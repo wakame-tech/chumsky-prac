@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use chumsky::prelude::*;
 
-use crate::{tokens::Token, nodes::{func::Func, expr::Expr}};
+use crate::{
+    nodes::{expr::Expr, func::Func},
+    tokens::Token,
+};
 
 use super::expr::expr_parser;
 
