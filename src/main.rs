@@ -90,13 +90,17 @@ fn report_errs(src: &String, lex_errs: Vec<Simple<char>>, parse_errs: Vec<Simple
 fn main() {
     let src = fs::read_to_string(env::args().nth(1).expect("Expected file argument"))
         .expect("Failed to read file");
-    let (tokens, mut lex_errs) = lexer().parse_recovery(src.as_str());
+    let (tokens, mut lex_errs) = lexer()
+        .parse_recovery(src.as_str());
     let parse_errs = if let Some(tokens) = tokens {
         // println!("Tokens = {:?}", tokens);
+
         let len = src.chars().count();
         let (ast, parse_errs) =
-            funcs_parser().parse_recovery(Stream::from_iter(len..len + 1, tokens.into_iter()));
+            funcs_parser()
+                .parse_recovery(Stream::from_iter(len..len + 1, tokens.into_iter()));
         println!("{:#?}", ast);
+        
         if let Some(funcs) = ast.filter(|_| lex_errs.len() + parse_errs.len() == 0) {
             if let Some(main) = funcs.get("main") {
                 assert_eq!(main.args.len(), 0);
