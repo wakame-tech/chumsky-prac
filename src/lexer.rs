@@ -1,4 +1,4 @@
-use chumsky::{prelude::*};
+use chumsky::prelude::*;
 
 use crate::{tokens::*, Span};
 
@@ -17,7 +17,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
     //     .map(Token::Str);
 
     // A parser for operators
-    let op = one_of("+-*/!=")
+    let op = one_of("+-*/!=<><=>=&&||%")
         .repeated()
         .at_least(1)
         .collect::<String>()
@@ -30,6 +30,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
     let ident = text::ident().map(|ident: String| match ident.as_str() {
         "fn" => Token::Fn,
         "let" => Token::Let,
+        "return" => Token::Return,
         // "print" => Token::Print,
         "if" => Token::If,
         "else" => Token::Else,

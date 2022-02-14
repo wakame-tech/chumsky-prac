@@ -12,6 +12,7 @@ pub enum Token {
     Fn,
     Let,
     // Print,
+    Return,
     If,
     Else,
 }
@@ -28,6 +29,7 @@ impl fmt::Display for Token {
             Token::Ident(s) => write!(f, "{}", s),
             Token::Fn => write!(f, "fn"),
             Token::Let => write!(f, "let"),
+            Token::Return => write!(f, "return"),
             // Token::Print => write!(f, "print"),
             Token::If => write!(f, "if"),
             Token::Else => write!(f, "else"),

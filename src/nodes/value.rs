@@ -1,4 +1,4 @@
-use crate::{Span, parsers::Error};
+use crate::{parsers::Error, Span};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Value {
@@ -18,6 +18,17 @@ impl Value {
             Err(Error {
                 span,
                 msg: format!("'{}' is not a number", self),
+            })
+        }
+    }
+
+    pub fn bool(self, span: Span) -> Result<bool, Error> {
+        if let Value::Bool(b) = self {
+            Ok(b)
+        } else {
+            Err(Error {
+                span,
+                msg: format!("'{}' is not a bool", self),
             })
         }
     }

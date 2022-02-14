@@ -1,6 +1,6 @@
 use crate::parsers::Spanned;
 
-use super::{value::Value, binaryop::BinaryOp};
+use super::{binaryop::BinaryOp, value::Value};
 
 // An expression node in the AST. Children are spanned so we can generate useful runtime errors.
 #[derive(Debug)]
@@ -13,6 +13,7 @@ pub enum Expr {
     Then(Box<Spanned<Self>>, Box<Spanned<Self>>),
     Binary(Box<Spanned<Self>>, BinaryOp, Box<Spanned<Self>>),
     Call(Box<Spanned<Self>>, Spanned<Vec<Spanned<Self>>>),
+    Return(Box<Spanned<Self>>),
     If(Box<Spanned<Self>>, Box<Spanned<Self>>, Box<Spanned<Self>>),
     // Print(Box<Spanned<Self>>),
 }

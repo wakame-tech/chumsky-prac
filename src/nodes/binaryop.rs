@@ -1,10 +1,16 @@
-
 #[derive(Clone, Debug)]
 pub enum BinaryOp {
-    Add,
-    Sub,
-    Mul,
-    Div,
-    Eq,
-    NotEq,
+    Or,  // ||
+    And, // &&
+    Eq,  // ==
+    Neq, // !=
+    Geq, // >=
+    Leq, // <=
+    Gt,  // >
+    Lt,  // <
+    Add, // +
+    Sub, // -
+    Mul, // *
+    Div, // /
+    Mod, // %
 }

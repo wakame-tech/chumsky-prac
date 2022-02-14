@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
-use crate::{parsers::{Spanned, Error}, nodes::{expr::Expr, func::Func, value::Value, binaryop::BinaryOp}};
-
+use crate::{
+    nodes::{binaryop::BinaryOp, expr::Expr, func::Func, value::Value},
+    parsers::{Error, Spanned},
+};
 
 pub fn eval_expr(
     expr: &Spanned<Expr>,
@@ -22,7 +24,10 @@ pub fn eval_expr(
             .rev()
             .find(|(l, _)| l == name)
             .map(|(_, v)| v.clone())
-            .or_else(|| Some(Value::Func(name.clone())).filter(|_| funcs.contains_key(name)))
+            .or_else(|| {
+                Some(Value::Func(name.clone()))
+                    .filter(|_| funcs.contains_key(name) || name == "print")
+            })
             .ok_or_else(|| Error {
                 span: expr.1.clone(),
                 msg: format!("No such variable '{}' in scope", name),
@@ -38,32 +43,82 @@ pub fn eval_expr(
             eval_expr(a, funcs, stack)?;
             eval_expr(b, funcs, stack)?
         }
+        // +
         Expr::Binary(a, BinaryOp::Add, b) => Value::Num(
             eval_expr(a, funcs, stack)?.num(a.1.clone())?
                 + eval_expr(b, funcs, stack)?.num(b.1.clone())?,
         ),
+        // -
         Expr::Binary(a, BinaryOp::Sub, b) => Value::Num(
             eval_expr(a, funcs, stack)?.num(a.1.clone())?
                 - eval_expr(b, funcs, stack)?.num(b.1.clone())?,
         ),
+        // *
         Expr::Binary(a, BinaryOp::Mul, b) => Value::Num(
             eval_expr(a, funcs, stack)?.num(a.1.clone())?
                 * eval_expr(b, funcs, stack)?.num(b.1.clone())?,
         ),
+        // /
         Expr::Binary(a, BinaryOp::Div, b) => Value::Num(
             eval_expr(a, funcs, stack)?.num(a.1.clone())?
                 / eval_expr(b, funcs, stack)?.num(b.1.clone())?,
         ),
+        // ==
         Expr::Binary(a, BinaryOp::Eq, b) => {
             Value::Bool(eval_expr(a, funcs, stack)? == eval_expr(b, funcs, stack)?)
         }
-        Expr::Binary(a, BinaryOp::NotEq, b) => {
+        // !=
+        Expr::Binary(a, BinaryOp::Neq, b) => {
             Value::Bool(eval_expr(a, funcs, stack)? != eval_expr(b, funcs, stack)?)
         }
+        // >
+        Expr::Binary(a, BinaryOp::Gt, b) => Value::Bool(
+            eval_expr(a, funcs, stack)?.num(a.1.clone())?
+                > eval_expr(b, funcs, stack)?.num(b.1.clone())?,
+        ),
+        // >=
+        Expr::Binary(a, BinaryOp::Geq, b) => Value::Bool(
+            eval_expr(a, funcs, stack)?.num(a.1.clone())?
+                >= eval_expr(b, funcs, stack)?.num(b.1.clone())?,
+        ),
+        // <
+        Expr::Binary(a, BinaryOp::Lt, b) => Value::Bool(
+            eval_expr(a, funcs, stack)?.num(a.1.clone())?
+                < eval_expr(b, funcs, stack)?.num(b.1.clone())?,
+        ),
+        // <=
+        Expr::Binary(a, BinaryOp::Leq, b) => Value::Bool(
+            eval_expr(a, funcs, stack)?.num(a.1.clone())?
+                <= eval_expr(b, funcs, stack)?.num(b.1.clone())?,
+        ),
+        // &&
+        Expr::Binary(a, BinaryOp::And, b) => Value::Bool(
+            eval_expr(a, funcs, stack)?.bool(a.1.clone())?
+                && eval_expr(b, funcs, stack)?.bool(b.1.clone())?,
+        ),
+        // ||
+        Expr::Binary(a, BinaryOp::Or, b) => Value::Bool(
+            eval_expr(a, funcs, stack)?.bool(a.1.clone())?
+                || eval_expr(b, funcs, stack)?.bool(b.1.clone())?,
+        ),
+        // %
+        Expr::Binary(a, BinaryOp::Mod, b) => Value::Num(
+            eval_expr(a, funcs, stack)?.num(a.1.clone())?
+                % eval_expr(b, funcs, stack)?.num(b.1.clone())?,
+        ),
         Expr::Call(func, (args, args_span)) => {
             let f = eval_expr(func, funcs, stack)?;
             match f {
                 Value::Func(name) => {
+                    if name == "print" {
+                        let evaled_args = args
+                            .iter()
+                            .map(|arg| eval_expr(arg, funcs, stack).unwrap())
+                            .collect::<Vec<Value>>();
+                        dbg!(evaled_args);
+                        return Ok(Value::Null);
+                    }
+
                     let f = &funcs[&name];
                     let mut stack = if f.args.len() != args.len() {
                         return Err(Error {
@@ -100,10 +155,10 @@ pub fn eval_expr(
                 }
             }
         }
-        // Expr::Print(a) => {
-        //     let val = eval_expr(a, funcs, stack)?;
-        //     println!("{}", val);
-        //     val
-        // }
+        Expr::Return(a) => {
+            let val = eval_expr(a, funcs, stack)?;
+            println!("{}", val);
+            val
+        }
     })
 }
