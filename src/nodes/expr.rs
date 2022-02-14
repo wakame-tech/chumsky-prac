@@ -9,7 +9,7 @@ pub enum Expr {
     Value(Value),
     // List(Vec<Spanned<Self>>),
     Local(String),
-    Let(String, Box<Spanned<Self>>, Box<Spanned<Self>>),
+    Var(String, Box<Spanned<Self>>, Box<Spanned<Self>>),
     Then(Box<Spanned<Self>>, Box<Spanned<Self>>),
     Binary(Box<Spanned<Self>>, BinaryOp, Box<Spanned<Self>>),
     Call(Box<Spanned<Self>>, Spanned<Vec<Spanned<Self>>>),

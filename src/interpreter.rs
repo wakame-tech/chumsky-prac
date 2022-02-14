@@ -32,7 +32,7 @@ pub fn eval_expr(
                 span: expr.1.clone(),
                 msg: format!("No such variable '{}' in scope", name),
             })?,
-        Expr::Let(local, val, body) => {
+        Expr::Var(local, val, body) => {
             let val = eval_expr(val, funcs, stack)?;
             stack.push((local.clone(), val));
             let res = eval_expr(body, funcs, stack)?;

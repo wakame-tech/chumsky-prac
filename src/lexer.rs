@@ -29,9 +29,8 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
     // A parser for identifiers and keywords
     let ident = text::ident().map(|ident: String| match ident.as_str() {
         "fn" => Token::Fn,
-        "let" => Token::Let,
+        "var" => Token::Var,
         "return" => Token::Return,
-        // "print" => Token::Print,
         "if" => Token::If,
         "else" => Token::Else,
         // "true" => Token::Bool(true),

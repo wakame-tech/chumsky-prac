@@ -24,7 +24,7 @@ pub fn expr_parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>>
             })
             .labelled("identifier");
 
-            // A list of expressions
+            // // A list of expressions
             let items = expr
                 .clone()
                 .chain(just(Token::Ctrl(',')).ignore_then(expr.clone()).repeated())
@@ -33,13 +33,17 @@ pub fn expr_parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>>
                 .map(|item| item.unwrap_or_else(Vec::new));
 
             // A let expression
-            let let_ = just(Token::Let)
+            let let_ = just(Token::Var)
                 .ignore_then(ident)
                 .then_ignore(just(Token::Op("=".to_string())))
                 .then(raw_expr)
                 .then_ignore(just(Token::Ctrl(';')))
                 .then(expr.clone())
-                .map(|((name, val), body)| Expr::Let(name, Box::new(val), Box::new(body)));
+                .map(|((name, val), body)| Expr::Var(name, Box::new(val), Box::new(body)));
+
+            let r#return = just(Token::Return)
+                .ignore_then(expr.clone())
+                .map(|expr| Expr::Return(Box::new(expr)));
 
             // let list = items
             //     .clone()
@@ -51,13 +55,7 @@ pub fn expr_parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>>
                 .or(ident.map(Expr::Local))
                 .or(let_)
                 // .or(list)
-                // In Nano Rust, `print` is just a keyword, just like Python 2, for simplicity
-                // .or(just(Token::Print)
-                //     .ignore_then(
-                //         expr.clone()
-                //             .delimited_by(just(Token::Ctrl('(')), just(Token::Ctrl(')'))),
-                //     )
-                //     .map(|expr| Expr::Print(Box::new(expr))))
+                .or(r#return)
                 .map_with_span(|expr, span| (expr, span))
                 // Atoms can also just be normal expressions, but surrounded with parentheses
                 .or(expr
