@@ -42,7 +42,7 @@ static TOKEN_TYPES: Lazy<Mutex<HashMap<String, u32>>> = Lazy::new(|| Mutex::new(
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
-        log::debug!("initialize: {:?}", params);
+        // log::debug!("initialize: {:?}", params);
 
         // semantic tokens
         let legend = params
@@ -143,9 +143,11 @@ impl LanguageServer for Backend {
             let mut contents = String::new();
             f.read_to_string(&mut contents).unwrap();
             let data = analyze_src(contents);
-            log::debug!("{:?}", &data);
+            data.iter().for_each(|t| {
+                log::debug!("token: {:?}", t);
+            });
             return Ok(Some(SemanticTokensResult::Tokens(SemanticTokens {
-                result_id: None,
+                result_id: Some(params.text_document.uri.to_string()),
                 data,
             })));
         }

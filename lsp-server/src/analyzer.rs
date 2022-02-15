@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use parser::{lexer::lex, tokens::Token};
 use tower_lsp::lsp_types::SemanticToken;
 
@@ -21,25 +22,18 @@ fn to_token_type(token: &Token) -> Option<String> {
 ///
 pub fn analyze_src(src: String) -> Vec<SemanticToken> {
     let map = &mut TOKEN_TYPES.lock().unwrap();
-    let data = src
+    let tokens = src
         .lines()
         .into_iter()
         .enumerate()
         .map(|(i, line)| {
-            let (tokens, _) = lex(line);
-            log::debug!("{:?}", &tokens);
+            let (tokens, _) = lex(format!("{}\n", line).as_str());
             tokens
                 .unwrap_or(vec![])
                 .into_iter()
                 .filter_map(|(tok, pos)| {
                     if let Some(key) = to_token_type(&tok) {
-                        Some(SemanticToken {
-                            delta_line: i as u32,
-                            delta_start: pos.start as u32,
-                            length: pos.len() as u32,
-                            token_type: *map.get(&key).unwrap(),
-                            token_modifiers_bitset: 0,
-                        })
+                        Some((i as u32, pos, key))
                     } else {
                         None
                     }
@@ -48,5 +42,37 @@ pub fn analyze_src(src: String) -> Vec<SemanticToken> {
         })
         .flatten()
         .collect::<Vec<_>>();
-    data
+
+    tokens.iter().for_each(|t| log::debug!("{:?}", t));
+
+    // calc relative position
+    let semantic_tokens = vec![
+        vec![SemanticToken {
+            delta_line: tokens[0].0,
+            delta_start: tokens[0].1.start as u32,
+            length: tokens[0].1.len() as u32,
+            token_type: *map.get(&tokens[0].2).unwrap(),
+            token_modifiers_bitset: 0,
+        }],
+        tokens
+            .into_iter()
+            .tuple_windows()
+            .map(|(pre, cur)| SemanticToken {
+                delta_line: cur.0 - pre.0,
+                delta_start: if cur.0 != pre.0 {
+                    cur.1.start as u32
+                } else {
+                    (cur.1.start - pre.1.start) as u32
+                },
+                length: cur.1.len() as u32,
+                token_type: *map.get(&cur.2).unwrap(),
+                token_modifiers_bitset: 0,
+            })
+            .collect::<Vec<_>>(),
+    ]
+    .concat();
+
+    log::debug!("{:?}", semantic_tokens);
+
+    semantic_tokens
 }

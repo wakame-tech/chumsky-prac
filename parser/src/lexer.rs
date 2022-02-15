@@ -71,6 +71,8 @@ pub fn lex(src: &str) -> (Option<Vec<(Token, Span)>>, Vec<Simple<char>>) {
 
 #[cfg(test)]
 mod tests {
+    use std::vec;
+
     use crate::{lexer::lex, tokens::Token};
 
     #[test]
@@ -92,5 +94,16 @@ mod tests {
                 vec![]
             )
         );
+
+        assert_eq!(
+            lex("// a\n1"),
+            (
+                Some(vec![
+                    (Token::Comment("// a".to_string()), 0..5),
+                    (Token::Num("1".to_string()), 5..6)
+                ]),
+                vec![]
+            )
+        )
     }
 }
