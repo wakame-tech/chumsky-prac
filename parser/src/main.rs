@@ -1,19 +1,8 @@
 use ariadne::{Color, Fmt, Label, Report, ReportKind, Source};
+use parser::{interpreter::eval_expr, lexer::lex, parsers::parse, tokens::Token};
 use std::{env, fs};
 
-mod interpreter;
-mod lexer;
-mod nodes;
-mod parsers;
-mod tokens;
-
-use chumsky::{prelude::Simple, Parser, Stream};
-use interpreter::eval_expr;
-use lexer::lexer;
-use parsers::funcs::funcs_parser;
-use tokens::Token;
-
-pub type Span = std::ops::Range<usize>;
+pub use chumsky::{prelude::Simple, Parser, Stream};
 
 fn report_errs(src: &String, lex_errs: Vec<Simple<char>>, parse_errs: Vec<Simple<Token>>) {
     lex_errs
@@ -91,14 +80,14 @@ fn report_errs(src: &String, lex_errs: Vec<Simple<char>>, parse_errs: Vec<Simple
 fn main() {
     let src = fs::read_to_string(env::args().nth(1).expect("Expected file argument"))
         .expect("Failed to read file");
-    let (tokens, mut lex_errs) = lexer().parse_recovery(src.as_str());
+    let (tokens, mut lex_errs) = lex(&src);
     dbg!(&tokens);
     let parse_errs = if let Some(tokens) = tokens {
         // println!("Tokens = {:?}", tokens);
 
         let len = src.chars().count();
-        let (ast, parse_errs) =
-            funcs_parser().parse_recovery(Stream::from_iter(len..len + 1, tokens.into_iter()));
+        let token_stream = Stream::from_iter(len..len + 1, tokens.into_iter());
+        let (ast, parse_errs) = parse(token_stream);
         println!("{:#?}", ast);
 
         if let Some(funcs) = ast.filter(|_| lex_errs.len() + parse_errs.len() == 0) {

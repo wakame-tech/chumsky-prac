@@ -2,7 +2,7 @@ use chumsky::prelude::*;
 
 use crate::{tokens::*, Span};
 
-pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
+fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
     // A parser for strings
     // let str_ = just('"')
     //     .ignore_then(filter(|c| *c != '"').repeated())
@@ -51,4 +51,12 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         .map_with_span(|tok, span| (tok, span))
         .padded()
         .repeated()
+}
+
+///
+/// do lex
+///
+pub fn lex(src: &str) -> (Option<Vec<(Token, Span)>>, Vec<Simple<char>>) {
+    let (tokens, lex_errs) = lexer().parse_recovery(src);
+    (tokens, lex_errs)
 }

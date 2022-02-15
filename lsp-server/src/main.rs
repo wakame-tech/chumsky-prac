@@ -5,6 +5,10 @@ use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 
+use crate::analyzer::analyze_src;
+
+mod analyzer;
+
 fn init_logger() {
     let timestamp = chrono::Local::now().format("%Y%m%d%H%M%S").to_string();
     let log_path = format!("lsp-{}.log", timestamp);
@@ -33,19 +37,6 @@ struct Backend {
 impl LanguageServer for Backend {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         log::debug!("initialize: {:?}", params);
-        let mut result = InitializeResult::default();
-
-        // sync
-        result.capabilities.text_document_sync =
-            Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::Full));
-
-        // completion
-        result.capabilities.completion_provider = Some(CompletionOptions {
-            resolve_provider: Some(false),
-            trigger_characters: None,
-            work_done_progress_options: Default::default(),
-            all_commit_characters: None,
-        });
 
         // semantic tokens
         let legend = params
@@ -54,20 +45,39 @@ impl LanguageServer for Backend {
             .unwrap()
             .semantic_tokens
             .unwrap();
-        result.capabilities.semantic_tokens_provider = Some(
-            SemanticTokensServerCapabilities::SemanticTokensOptions(SemanticTokensOptions {
-                legend: SemanticTokensLegend {
-                    token_types: legend.token_types,
-                    token_modifiers: legend.token_modifiers,
-                },
-                range: Some(false),
-                full: Some(SemanticTokensFullOptions::Bool(true)),
-                work_done_progress_options: WorkDoneProgressOptions {
-                    work_done_progress: Some(true),
-                },
-            }),
-        );
-        Ok(result)
+
+        log::debug!("token_types: {:?}", &legend.token_types);
+
+        return Ok(InitializeResult {
+            server_info: None,
+            capabilities: ServerCapabilities {
+                text_document_sync: Some(TextDocumentSyncCapability::Kind(
+                    TextDocumentSyncKind::Full,
+                )),
+                completion_provider: Some(CompletionOptions {
+                    resolve_provider: Some(false),
+                    trigger_characters: None,
+                    work_done_progress_options: Default::default(),
+                    all_commit_characters: None,
+                }),
+                semantic_tokens_provider: Some(
+                    SemanticTokensServerCapabilities::SemanticTokensOptions(
+                        SemanticTokensOptions {
+                            legend: SemanticTokensLegend {
+                                token_types: legend.token_types,
+                                token_modifiers: vec![],
+                            },
+                            range: Some(false),
+                            full: Some(SemanticTokensFullOptions::Delta { delta: Some(true) }),
+                            work_done_progress_options: WorkDoneProgressOptions {
+                                work_done_progress: Some(true),
+                            },
+                        },
+                    ),
+                ),
+                ..ServerCapabilities::default()
+            },
+        });
     }
 
     async fn initialized(&self, params: InitializedParams) {
@@ -85,20 +95,17 @@ impl LanguageServer for Backend {
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         log::debug!("did_open");
-        self.client
-            .log_message(MessageType::Info, format!("{:?}", &params))
-            .await;
+
+        let tokens = analyze_src(params.text_document.uri, params.text_document.text);
+        log::debug!("tokens: {:?}", tokens);
     }
 
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
-        log::debug!("did_close");
+        log::debug!("did_close: {:?}", &params.text_document.uri);
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
-        log::debug!("did_change: {:?}", &params);
-        self.client
-            .log_message(MessageType::Info, format!("{:?}", &params))
-            .await;
+        log::debug!("did_change: {:?}", &params.text_document.uri);
     }
 
     async fn completion(&self, params: CompletionParams) -> Result<Option<CompletionResponse>> {
@@ -129,6 +136,14 @@ impl LanguageServer for Backend {
             result_id: Some("".to_string()),
             data: tokens,
         })))
+    }
+
+    async fn semantic_tokens_full_delta(
+        &self,
+        params: SemanticTokensDeltaParams,
+    ) -> Result<Option<SemanticTokensFullDeltaResult>> {
+        log::debug!("semantic_tokens_full_delta: {:?}", &params);
+        Ok(None)
     }
 
     async fn hover(&self, _: HoverParams) -> Result<Option<Hover>> {

@@ -312,6 +312,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "log",
+ "parser",
  "simplelog",
  "tokio",
  "tower-lsp",
