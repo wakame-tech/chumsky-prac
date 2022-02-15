@@ -81,13 +81,18 @@ fn main() {
     let src = fs::read_to_string(env::args().nth(1).expect("Expected file argument"))
         .expect("Failed to read file");
     let (tokens, mut lex_errs) = lex(&src);
-    dbg!(&tokens);
+
     let parse_errs = if let Some(tokens) = tokens {
-        // println!("Tokens = {:?}", tokens);
+        let tokens = tokens
+            .into_iter()
+            .filter(|t| !matches!(t.0, Token::Comment(_)))
+            .collect::<Vec<_>>();
+        tokens.iter().for_each(|t| println!("{} {:?}", t.0, t.1));
 
         let len = src.chars().count();
         let token_stream = Stream::from_iter(len..len + 1, tokens.into_iter());
         let (ast, parse_errs) = parse(token_stream);
+
         println!("{:#?}", ast);
 
         if let Some(funcs) = ast.filter(|_| lex_errs.len() + parse_errs.len() == 0) {
