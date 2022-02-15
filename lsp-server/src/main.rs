@@ -1,6 +1,7 @@
 use std::fs::{File, OpenOptions};
 use std::io::prelude::*;
 use std::path::Path;
+use std::ptr::NonNull;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
@@ -65,10 +66,10 @@ impl LanguageServer for Backend {
                         SemanticTokensOptions {
                             legend: SemanticTokensLegend {
                                 token_types: legend.token_types,
-                                token_modifiers: vec![],
+                                token_modifiers: legend.token_modifiers,
                             },
                             range: Some(false),
-                            full: Some(SemanticTokensFullOptions::Delta { delta: Some(true) }),
+                            full: Some(SemanticTokensFullOptions::Delta { delta: Some(false) }),
                             work_done_progress_options: WorkDoneProgressOptions {
                                 work_done_progress: Some(true),
                             },
@@ -95,9 +96,6 @@ impl LanguageServer for Backend {
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         log::debug!("did_open");
-
-        let tokens = analyze_src(params.text_document.uri, params.text_document.text);
-        log::debug!("tokens: {:?}", tokens);
     }
 
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
@@ -125,24 +123,15 @@ impl LanguageServer for Backend {
         params: SemanticTokensParams,
     ) -> Result<Option<SemanticTokensResult>> {
         log::debug!("semantic_tokens_full: {:?}", &params);
-        let tokens: Vec<SemanticToken> = vec![];
-        dbg!(&params);
-        let uri = params.text_document.uri.to_string();
-        let mut f = File::open(&uri).unwrap();
-        let mut contents = String::new();
-        f.read_to_string(&mut contents).unwrap();
-        dbg!(&contents);
-        Ok(Some(SemanticTokensResult::Tokens(SemanticTokens {
-            result_id: Some("".to_string()),
-            data: tokens,
-        })))
-    }
-
-    async fn semantic_tokens_full_delta(
-        &self,
-        params: SemanticTokensDeltaParams,
-    ) -> Result<Option<SemanticTokensFullDeltaResult>> {
-        log::debug!("semantic_tokens_full_delta: {:?}", &params);
+        // let tokens: Vec<SemanticToken> = vec![];
+        let path = params.text_document.uri.to_file_path().unwrap();
+        log::debug!("open file: {:?}, exists: {:?}", path, path.exists());
+        if let Ok(mut f) = File::open(&path) {
+            let mut contents = String::new();
+            f.read_to_string(&mut contents).unwrap();
+            let tokens = analyze_src(contents);
+            log::debug!("{:?}", &tokens);
+        }
         Ok(None)
     }
 

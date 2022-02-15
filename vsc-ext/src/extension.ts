@@ -6,6 +6,8 @@ import {
   ServerOptions,
 } from "vscode-languageclient/node";
 
+const selector = { language: "ipulang", scheme: "file" };
+
 let client: LanguageClient;
 
 export function activate(context: vscode.ExtensionContext) {
@@ -15,12 +17,13 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   let clientOptions: LanguageClientOptions = {
-    documentSelector: [{ scheme: "file", language: "ipulang" }],
+    documentSelector: [selector],
   };
   client = new LanguageClient("ipulang-lsp", serverOptions, clientOptions);
-  client.start();
+
+  context.subscriptions.push(client.start());
   vscode.window.showInformationMessage(
-    `Extension 'vscode-language-server' is now active.`
+    `Extension 'vscode-language-server' is now active. ${new Date().toLocaleTimeString()}`
   );
 }
 
