@@ -21,6 +21,18 @@
             }
         ]
     },
+    "editor.semanticTokenColorCustomizations": {
+        "enabled": true,
+        "rules": {
+            "*.static": {
+                "foreground": "#ff0000",
+                "fontStyle": "bold"
+            },
+            "type": {
+                "foreground": "#00aa00"
+            }
+        }
+    },
     "dependencies": {
         "vscode-languageclient": "^7.0.0"
     },

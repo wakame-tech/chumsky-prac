@@ -1,7 +1,10 @@
+use once_cell::sync::Lazy;
+use parser::tokens::Token;
+use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
 use std::io::prelude::*;
 use std::path::Path;
-use std::ptr::NonNull;
+use std::sync::Mutex;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
@@ -34,6 +37,8 @@ struct Backend {
     client: Client,
 }
 
+static TOKEN_TYPES: Lazy<Mutex<HashMap<String, u32>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
@@ -46,8 +51,15 @@ impl LanguageServer for Backend {
             .unwrap()
             .semantic_tokens
             .unwrap();
+        let types = legend.token_types;
 
-        log::debug!("token_types: {:?}", &legend.token_types);
+        log::debug!("token_types: {:?}", &types);
+        log::debug!("token_modifiers: {:?}", &legend.token_modifiers);
+
+        let map = &mut TOKEN_TYPES.lock().unwrap();
+        for (i, token) in types.iter().enumerate() {
+            map.insert(token.as_str().to_owned(), i as u32);
+        }
 
         return Ok(InitializeResult {
             server_info: None,
@@ -65,7 +77,7 @@ impl LanguageServer for Backend {
                     SemanticTokensServerCapabilities::SemanticTokensOptions(
                         SemanticTokensOptions {
                             legend: SemanticTokensLegend {
-                                token_types: legend.token_types,
+                                token_types: types,
                                 token_modifiers: legend.token_modifiers,
                             },
                             range: Some(false),
@@ -126,11 +138,16 @@ impl LanguageServer for Backend {
         // let tokens: Vec<SemanticToken> = vec![];
         let path = params.text_document.uri.to_file_path().unwrap();
         log::debug!("open file: {:?}, exists: {:?}", path, path.exists());
+
         if let Ok(mut f) = File::open(&path) {
             let mut contents = String::new();
             f.read_to_string(&mut contents).unwrap();
-            let tokens = analyze_src(contents);
-            log::debug!("{:?}", &tokens);
+            let data = analyze_src(contents);
+            log::debug!("{:?}", &data);
+            return Ok(Some(SemanticTokensResult::Tokens(SemanticTokens {
+                result_id: None,
+                data,
+            })));
         }
         Ok(None)
     }

@@ -11,11 +11,16 @@ fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
     //     .map(Token::Str);
 
     // A parser for operators
-    let op = one_of("+-*/!=<><=>=&&||%")
-        .repeated()
-        .at_least(1)
-        .collect::<String>()
-        .map(Token::Op);
+    let op = just("+")
+        .or(just("-"))
+        .or(just("*"))
+        .or(just("/"))
+        .or(just("%"))
+        .or(just("=="))
+        .or(just("="))
+        .or(just("<"))
+        .or(just(">"))
+        .map(|c| Token::Op(c.to_string()));
 
     // A parser for control characters (delimiters, semicolons, etc.)
     let ctrl = one_of("()[]{};,:").map(|c| Token::Ctrl(c));
@@ -33,21 +38,24 @@ fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
         _ => Token::Ident(ident),
     });
 
+    let comment = just("//")
+        .then(take_until(just('\n')))
+        .padded()
+        .map(|(a, (b, _))| Token::Comment(format!("{}{}", a, b.into_iter().collect::<String>())));
+
     // A parser for numbers
     let num = text::int(10).map(Token::Num);
 
     // A single token can be one of the above
-    let token = num
+    let token = comment
+        .or(num)
         // .or(str_)
         .or(op)
         .or(ctrl)
         .or(ident)
         .recover_with(skip_then_retry_until([]));
 
-    let comment = just("//").then(take_until(just('\n'))).padded();
-
     token
-        .padded_by(comment.repeated())
         .map_with_span(|tok, span| (tok, span))
         .padded()
         .repeated()
@@ -59,4 +67,30 @@ fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
 pub fn lex(src: &str) -> (Option<Vec<(Token, Span)>>, Vec<Simple<char>>) {
     let (tokens, lex_errs) = lexer().parse_recovery(src);
     (tokens, lex_errs)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{lexer::lex, tokens::Token};
+
+    #[test]
+    fn it_works() {
+        assert_eq!(
+            lex("+"),
+            (Some(vec![(Token::Op("+".to_string()), 0..1)]), vec![])
+        );
+
+        assert_eq!(
+            lex("=="),
+            (Some(vec![(Token::Op("==".to_string()), 0..2)]), vec![])
+        );
+
+        assert_eq!(
+            lex("// a\n"),
+            (
+                Some(vec![(Token::Comment("// a".to_string()), 0..5)]),
+                vec![]
+            )
+        );
+    }
 }
