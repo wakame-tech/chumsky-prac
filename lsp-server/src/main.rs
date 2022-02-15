@@ -1,14 +1,24 @@
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::prelude::*;
+use std::path::Path;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 
 fn init_logger() {
+    let timestamp = chrono::Local::now().format("%Y%m%d%H%M%S").to_string();
+    let log_path = format!("lsp-{}.log", timestamp);
+    let path = Path::new(&log_path);
+    let file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .append(true)
+        .open(path)
+        .unwrap();
     simplelog::CombinedLogger::init(vec![simplelog::WriteLogger::new(
         simplelog::LevelFilter::Debug,
         simplelog::Config::default(),
-        File::create("lsp.log").unwrap(),
+        file,
     )])
     .unwrap();
     log::debug!("logger initialized");
@@ -24,9 +34,11 @@ impl LanguageServer for Backend {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         log::debug!("initialize: {:?}", params);
         let mut result = InitializeResult::default();
+
         // sync
         result.capabilities.text_document_sync =
             Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::Full));
+
         // completion
         result.capabilities.completion_provider = Some(CompletionOptions {
             resolve_provider: Some(false),
@@ -34,17 +46,24 @@ impl LanguageServer for Backend {
             work_done_progress_options: Default::default(),
             all_commit_characters: None,
         });
-        // highlight
+
+        // semantic tokens
+        let legend = params
+            .capabilities
+            .text_document
+            .unwrap()
+            .semantic_tokens
+            .unwrap();
         result.capabilities.semantic_tokens_provider = Some(
             SemanticTokensServerCapabilities::SemanticTokensOptions(SemanticTokensOptions {
                 legend: SemanticTokensLegend {
-                    token_types: vec![SemanticTokenType::VARIABLE.into()],
-                    token_modifiers: vec![],
+                    token_types: legend.token_types,
+                    token_modifiers: legend.token_modifiers,
                 },
                 range: Some(false),
                 full: Some(SemanticTokensFullOptions::Bool(true)),
                 work_done_progress_options: WorkDoneProgressOptions {
-                    work_done_progress: Some(false),
+                    work_done_progress: Some(true),
                 },
             }),
         );
@@ -52,15 +71,11 @@ impl LanguageServer for Backend {
     }
 
     async fn initialized(&self, params: InitializedParams) {
-        log::debug!("initialize: {:?}", &params);
         log::debug!("server initialized");
 
-        self.client
-            .log_message(MessageType::Info, format!("{:?}", &params))
-            .await;
-        self.client
-            .log_message(MessageType::Info, "server initialized!")
-            .await;
+        // self.client
+        //     .log_message(MessageType::Info, "server initialized!")
+        //     .await;
     }
 
     async fn shutdown(&self) -> Result<()> {
@@ -69,10 +84,14 @@ impl LanguageServer for Backend {
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
-        log::debug!("did_open: {:?}", &params);
+        log::debug!("did_open");
         self.client
             .log_message(MessageType::Info, format!("{:?}", &params))
             .await;
+    }
+
+    async fn did_close(&self, params: DidCloseTextDocumentParams) {
+        log::debug!("did_close");
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
@@ -83,7 +102,7 @@ impl LanguageServer for Backend {
     }
 
     async fn completion(&self, params: CompletionParams) -> Result<Option<CompletionResponse>> {
-        log::debug!("completion: {:?}", &params);
+        log::info!("completion: {:?}", &params);
         self.client
             .log_message(MessageType::Info, format!("{:?}", &params))
             .await;
@@ -99,7 +118,7 @@ impl LanguageServer for Backend {
         params: SemanticTokensParams,
     ) -> Result<Option<SemanticTokensResult>> {
         log::debug!("semantic_tokens_full: {:?}", &params);
-        let mut tokens: Vec<SemanticToken> = vec![];
+        let tokens: Vec<SemanticToken> = vec![];
         dbg!(&params);
         let uri = params.text_document.uri.to_string();
         let mut f = File::open(&uri).unwrap();
@@ -129,13 +148,6 @@ async fn main() {
     let stdout = tokio::io::stdout();
 
     let (service, messages) = LspService::new(|client| Backend { client });
-    // let listener = tokio::net::TcpListener::bind("0.0.0.0:12345")
-    //     .await
-    //     .unwrap();
-    // let (stream, _) = listener.accept().await.unwrap();
-    // let (read, write) = tokio::io::split(stream);
-
-    // Server::new(read, write)
     Server::new(stdin, stdout)
         .interleave(messages)
         .serve(service)
