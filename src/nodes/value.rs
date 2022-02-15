@@ -4,15 +4,27 @@ use crate::{parsers::Error, Span};
 pub enum Value {
     Null,
     Bool(bool),
-    Num(f64),
+    I32(i32),
+    I64(i64),
     // Str(String),
     // List(Vec<Value>),
     Func(String),
 }
 
 impl Value {
-    pub fn num(self, span: Span) -> Result<f64, Error> {
-        if let Value::Num(x) = self {
+    pub fn num_i32(self, span: Span) -> Result<i32, Error> {
+        if let Value::I32(x) = self {
+            Ok(x)
+        } else {
+            Err(Error {
+                span,
+                msg: format!("'{}' is not a number", self),
+            })
+        }
+    }
+
+    pub fn num_i64(self, span: Span) -> Result<i64, Error> {
+        if let Value::I64(x) = self {
             Ok(x)
         } else {
             Err(Error {
@@ -39,7 +51,8 @@ impl std::fmt::Display for Value {
         match self {
             Self::Null => write!(f, "null"),
             Self::Bool(x) => write!(f, "{}", x),
-            Self::Num(x) => write!(f, "{}", x),
+            Self::I32(x) => write!(f, "{}", x),
+            Self::I64(x) => write!(f, "{}", x),
             // Self::Str(x) => write!(f, "{}", x),
             // Self::List(xs) => write!(
             //     f,

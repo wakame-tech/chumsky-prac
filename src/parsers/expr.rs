@@ -12,7 +12,7 @@ pub fn expr_parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>>
             let val = filter_map(|span, tok| match tok {
                 // Token::Null => Ok(Expr::Value(Value::Null)),
                 // Token::Bool(x) => Ok(Expr::Value(Value::Bool(x))),
-                Token::Num(n) => Ok(Expr::Value(Value::Num(n.parse().unwrap()))),
+                Token::Num(n) => Ok(Expr::Value(Value::I32(n.parse().unwrap()))),
                 // Token::Str(s) => Ok(Expr::Value(Value::Str(s))),
                 _ => Err(Simple::expected_input_found(span, Vec::new(), Some(tok))),
             })

@@ -44,24 +44,24 @@ pub fn eval_expr(
             eval_expr(b, funcs, stack)?
         }
         // +
-        Expr::Binary(a, BinaryOp::Add, b) => Value::Num(
-            eval_expr(a, funcs, stack)?.num(a.1.clone())?
-                + eval_expr(b, funcs, stack)?.num(b.1.clone())?,
+        Expr::Binary(a, BinaryOp::Add, b) => Value::I32(
+            eval_expr(a, funcs, stack)?.num_i32(a.1.clone())?
+                + eval_expr(b, funcs, stack)?.num_i32(b.1.clone())?,
         ),
         // -
-        Expr::Binary(a, BinaryOp::Sub, b) => Value::Num(
-            eval_expr(a, funcs, stack)?.num(a.1.clone())?
-                - eval_expr(b, funcs, stack)?.num(b.1.clone())?,
+        Expr::Binary(a, BinaryOp::Sub, b) => Value::I32(
+            eval_expr(a, funcs, stack)?.num_i32(a.1.clone())?
+                - eval_expr(b, funcs, stack)?.num_i32(b.1.clone())?,
         ),
         // *
-        Expr::Binary(a, BinaryOp::Mul, b) => Value::Num(
-            eval_expr(a, funcs, stack)?.num(a.1.clone())?
-                * eval_expr(b, funcs, stack)?.num(b.1.clone())?,
+        Expr::Binary(a, BinaryOp::Mul, b) => Value::I32(
+            eval_expr(a, funcs, stack)?.num_i32(a.1.clone())?
+                * eval_expr(b, funcs, stack)?.num_i32(b.1.clone())?,
         ),
         // /
-        Expr::Binary(a, BinaryOp::Div, b) => Value::Num(
-            eval_expr(a, funcs, stack)?.num(a.1.clone())?
-                / eval_expr(b, funcs, stack)?.num(b.1.clone())?,
+        Expr::Binary(a, BinaryOp::Div, b) => Value::I32(
+            eval_expr(a, funcs, stack)?.num_i32(a.1.clone())?
+                / eval_expr(b, funcs, stack)?.num_i32(b.1.clone())?,
         ),
         // ==
         Expr::Binary(a, BinaryOp::Eq, b) => {
@@ -73,23 +73,23 @@ pub fn eval_expr(
         }
         // >
         Expr::Binary(a, BinaryOp::Gt, b) => Value::Bool(
-            eval_expr(a, funcs, stack)?.num(a.1.clone())?
-                > eval_expr(b, funcs, stack)?.num(b.1.clone())?,
+            eval_expr(a, funcs, stack)?.num_i32(a.1.clone())?
+                > eval_expr(b, funcs, stack)?.num_i32(b.1.clone())?,
         ),
         // >=
         Expr::Binary(a, BinaryOp::Geq, b) => Value::Bool(
-            eval_expr(a, funcs, stack)?.num(a.1.clone())?
-                >= eval_expr(b, funcs, stack)?.num(b.1.clone())?,
+            eval_expr(a, funcs, stack)?.num_i32(a.1.clone())?
+                >= eval_expr(b, funcs, stack)?.num_i32(b.1.clone())?,
         ),
         // <
         Expr::Binary(a, BinaryOp::Lt, b) => Value::Bool(
-            eval_expr(a, funcs, stack)?.num(a.1.clone())?
-                < eval_expr(b, funcs, stack)?.num(b.1.clone())?,
+            eval_expr(a, funcs, stack)?.num_i32(a.1.clone())?
+                < eval_expr(b, funcs, stack)?.num_i32(b.1.clone())?,
         ),
         // <=
         Expr::Binary(a, BinaryOp::Leq, b) => Value::Bool(
-            eval_expr(a, funcs, stack)?.num(a.1.clone())?
-                <= eval_expr(b, funcs, stack)?.num(b.1.clone())?,
+            eval_expr(a, funcs, stack)?.num_i32(a.1.clone())?
+                <= eval_expr(b, funcs, stack)?.num_i32(b.1.clone())?,
         ),
         // &&
         Expr::Binary(a, BinaryOp::And, b) => Value::Bool(
@@ -102,9 +102,9 @@ pub fn eval_expr(
                 || eval_expr(b, funcs, stack)?.bool(b.1.clone())?,
         ),
         // %
-        Expr::Binary(a, BinaryOp::Mod, b) => Value::Num(
-            eval_expr(a, funcs, stack)?.num(a.1.clone())?
-                % eval_expr(b, funcs, stack)?.num(b.1.clone())?,
+        Expr::Binary(a, BinaryOp::Mod, b) => Value::I32(
+            eval_expr(a, funcs, stack)?.num_i32(a.1.clone())?
+                % eval_expr(b, funcs, stack)?.num_i32(b.1.clone())?,
         ),
         Expr::Call(func, (args, args_span)) => {
             let f = eval_expr(func, funcs, stack)?;
