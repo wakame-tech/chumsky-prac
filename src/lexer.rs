@@ -34,9 +34,7 @@ pub fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
     });
 
     // A parser for numbers
-    let num = text::int(10)
-        .then(just('_').ignore_then(text::ident()).or_not())
-        .map(|(v, _)| Token::Num(v));
+    let num = text::int(10).map(Token::Num);
 
     // A single token can be one of the above
     let token = num

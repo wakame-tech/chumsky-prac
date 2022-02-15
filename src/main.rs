@@ -92,6 +92,7 @@ fn main() {
     let src = fs::read_to_string(env::args().nth(1).expect("Expected file argument"))
         .expect("Failed to read file");
     let (tokens, mut lex_errs) = lexer().parse_recovery(src.as_str());
+    dbg!(&tokens);
     let parse_errs = if let Some(tokens) = tokens {
         // println!("Tokens = {:?}", tokens);
 
