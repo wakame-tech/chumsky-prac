@@ -8,12 +8,9 @@ import {
 
 let client: LanguageClient;
 
-export function activate(context) {
-  vscode.window.showInformationMessage(
-    `Extension 'vscode-language-server' is now active.`
-  );
+export function activate(context: vscode.ExtensionContext) {
   let serverOptions: ServerOptions = {
-    command: path.join("..", "lsp-server", "target", "debug", "lsp-server.exe"),
+    command: path.join(context.extensionPath, "../target/debug/lsp-server.exe"),
     args: [],
   };
 
@@ -22,6 +19,9 @@ export function activate(context) {
   };
   client = new LanguageClient("ipulang-lsp", serverOptions, clientOptions);
   client.start();
+  vscode.window.showInformationMessage(
+    `Extension 'vscode-language-server' is now active.`
+  );
 }
 
 export function deactivate(): Thenable<void> | undefined {
