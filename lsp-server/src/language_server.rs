@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use tower_lsp::jsonrpc::Result;
 use tower_lsp::lsp_types::*;
-use tower_lsp::{Client, LanguageServer, LspService, Server};
+use tower_lsp::{Client, LanguageServer};
 
 use crate::analyzer::analyze_src;
 use crate::globals::TOKEN_TYPES;

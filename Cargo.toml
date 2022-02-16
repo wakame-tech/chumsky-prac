@@ -1,2 +1,7 @@
 [workspace]
-members = ["lsp-server", "parser"]
+members = [
+    "interface",    
+    "parser",
+    "lsp-server", 
+    "interpreter",
+]

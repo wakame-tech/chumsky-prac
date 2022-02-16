@@ -1,4 +1,4 @@
-use crate::{parsers::Error, Span};
+use crate::{Error, Span};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Value {

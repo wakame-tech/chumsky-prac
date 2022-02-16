@@ -1,6 +1,7 @@
+use interface::tokens::Token;
+
 use super::RangedTokenType;
 use itertools::Itertools;
-use parser::tokens::Token;
 use tower_lsp::lsp_types::SemanticToken;
 
 /// TODO: lexer 側で提供する

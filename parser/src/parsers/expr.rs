@@ -1,10 +1,10 @@
-use crate::{
+use interface::{
     nodes::{binaryop::BinaryOp, expr::Expr, value::Value},
-    tokens::*,
+    tokens::Token,
+    Spanned,
 };
-use chumsky::prelude::*;
 
-use super::Spanned;
+use chumsky::prelude::*;
 
 pub fn expr_parser() -> impl Parser<Token, Spanned<Expr>, Error = Simple<Token>> + Clone {
     recursive(|expr| {

@@ -1,11 +1,10 @@
-use std::collections::HashMap;
-
-use chumsky::prelude::*;
-
-use crate::{
+use interface::{
     nodes::{expr::Expr, func::Func},
     tokens::Token,
 };
+use std::collections::HashMap;
+
+use chumsky::prelude::*;
 
 use super::expr::expr_parser;
 

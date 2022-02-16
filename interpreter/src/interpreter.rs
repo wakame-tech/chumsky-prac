@@ -1,9 +1,8 @@
-use std::collections::HashMap;
-
-use crate::{
+use interface::{
     nodes::{binaryop::BinaryOp, expr::Expr, func::Func, value::Value},
-    parsers::{Error, Spanned},
+    Error, Spanned,
 };
+use std::collections::HashMap;
 
 pub fn eval_expr(
     expr: &Spanned<Expr>,

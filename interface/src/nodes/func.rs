@@ -1,4 +1,4 @@
-use crate::parsers::Spanned;
+use crate::Spanned;
 
 use super::expr::Expr;
 

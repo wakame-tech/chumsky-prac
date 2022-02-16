@@ -1,6 +1,5 @@
 use chumsky::prelude::*;
-
-use crate::{tokens::*, Span};
+use interface::{tokens::Token, Span};
 
 fn lexer() -> impl Parser<char, Vec<(Token, Span)>, Error = Simple<char>> {
     // A parser for strings
@@ -71,9 +70,10 @@ pub fn lex(src: &str) -> (Option<Vec<(Token, Span)>>, Vec<Simple<char>>) {
 
 #[cfg(test)]
 mod tests {
+    use interface::tokens::Token;
     use std::vec;
 
-    use crate::{lexer::lex, tokens::Token};
+    use crate::lexer::lex;
 
     #[test]
     fn it_works() {

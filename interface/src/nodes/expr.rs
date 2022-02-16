@@ -1,4 +1,4 @@
-use crate::parsers::Spanned;
+use crate::Spanned;
 
 use super::{binaryop::BinaryOp, value::Value};
 

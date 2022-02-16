@@ -285,6 +285,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "interface"
+version = "0.1.0"
+
+[[package]]
+name = "interpreter"
+version = "0.1.0"
+dependencies = [
+ "ariadne",
+ "chumsky",
+ "interface",
+ "parser",
+]
+
+[[package]]
 name = "itertools"
 version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -327,6 +341,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "chumsky",
+ "interface",
  "itertools",
  "log",
  "once_cell",
@@ -445,6 +460,7 @@ version = "0.1.0"
 dependencies = [
  "ariadne",
  "chumsky",
+ "interface",
 ]
 
 [[package]]
