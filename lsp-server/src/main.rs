@@ -142,10 +142,14 @@ impl LanguageServer for Backend {
         if let Ok(mut f) = File::open(&path) {
             let mut contents = String::new();
             f.read_to_string(&mut contents).unwrap();
-            let data = analyze_src(contents);
-            data.iter().for_each(|t| {
-                log::debug!("token: {:?}", t);
-            });
+            let (data, diagnostics) = analyze_src(contents);
+
+            log::debug!("diagnostics: {:?}", diagnostics);
+
+            self.client
+                .publish_diagnostics(params.text_document.uri.clone(), diagnostics, None)
+                .await;
+
             return Ok(Some(SemanticTokensResult::Tokens(SemanticTokens {
                 result_id: Some(params.text_document.uri.to_string()),
                 data,

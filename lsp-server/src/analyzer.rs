@@ -68,6 +68,7 @@ fn to_diagnostics(line: usize, err: &Simple<char>) -> Diagnostic {
     let span = err.span();
     let expected = err.expected().filter_map(|s| *s).join(", ");
     let found = err.found().unwrap();
+
     Diagnostic {
         range: Range {
             start: Position {
@@ -106,12 +107,13 @@ fn to_semantic_tokens(types: Vec<RangedTokenType>) -> Vec<SemanticToken> {
 /// convert source to tokens and diagnostics
 /// TODO: ASTを作っていないので全然semanticじゃない
 /// TODO: line毎にlexしている
-pub fn analyze_src(src: String) -> Vec<SemanticToken> {
+pub fn analyze_src(src: String) -> (Vec<SemanticToken>, Vec<Diagnostic>) {
     let map = &mut TOKEN_TYPES.lock().unwrap();
     let mut diagnostics: Vec<Diagnostic> = vec![];
     let mut ranged_types: Vec<RangedTokenType> = vec![];
     src.lines().into_iter().enumerate().for_each(|(i, line)| {
         let (tokens, errs) = lex(format!("{}\n", line).as_str());
+        log::debug!("{:?}", errs);
         let diag_errs = errs
             .iter()
             .map(|err| to_diagnostics(i, err))
@@ -154,6 +156,5 @@ pub fn analyze_src(src: String) -> Vec<SemanticToken> {
         )
     });
     let semantic_tokens = to_semantic_tokens(ranged_types);
-    log::debug!("{:?}", semantic_tokens);
-    semantic_tokens
+    (semantic_tokens, diagnostics)
 }
